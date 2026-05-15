@@ -244,3 +244,13 @@ _Built with obsession, shipped with precision._
 ### This project is an official participant in Nexus Spring of Code (NSoC) 2026.
 
 </div>
+
+---
+
+## 💖 Contributors
+
+Thanks to all contributors who have helped make CommitPulse better!
+
+<a href="https://github.com/JhaSourav07/commitpulse/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=JhaSourav07/commitpulse" alt="Contributors" />
+</a>
