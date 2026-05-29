@@ -195,8 +195,8 @@ function renderStyle(
     transform-origin: center;
   }
   @keyframes scan-sweep {
-    from { transform: translateY(var(--scan-start, ${fs(20)}px)); }
-    to { transform: translateY(var(--scan-end, ${fs(260)}px)); }
+    from { transform: translateY(var(--scan-start, ${fs(0)}px)); }
+    to { transform: translateY(var(--scan-end, ${fs(240)}px)); }
   }
   .title { font-family: ${selectedFont || '"Syncopate", sans-serif'}; fill: ${text}; font-size: ${fs(18)}px; letter-spacing: ${fs(6)}px; font-weight: 400; opacity: 0.8; }
   .stats { font-family: ${statsFont}; fill: ${text}; font-size: ${fs(42)}px; font-weight: 500; letter-spacing: 0; }
@@ -207,7 +207,7 @@ function renderStyle(
     .scan-line {
       animation: none !important;
       transition: none !important;
-      transform: translateY(var(--scan-start, ${fs(20)}px)) !important;
+      transform: translateY(var(--scan-start, ${fs(0)}px)) !important;
     }
   }
   .isometric-label { font-family: ${selectedFont || '"Roboto", sans-serif'}; font-size: ${fs(10)}px; font-weight: 400; letter-spacing: 1px; fill-opacity: 0.6; }
@@ -335,12 +335,12 @@ function renderFooter(
   ${!params.hide_title ? `<text x="${s(300)}" y="${s(50)}" text-anchor="middle" class="title">${truncateUsername(safeUser).toUpperCase()}</text>` : ''}
   <rect
     x="${s(100)}"
-    y="${s(60)}"
+    y="${s(80)}"
     width="${s(400)}"
     height="${sf}"
     class="cp-accent-fill scan-line"
     fill-opacity="0.3"
-    style="--scan-speed: ${params.speed || '8s'}; --scan-start: ${s(20)}px; --scan-end: ${s(260)}px;"
+    style="--scan-speed: ${params.speed || '8s'}; --scan-start: ${s(0)}px; --scan-end: ${s(240)}px;"
   />`;
 }
 
@@ -553,8 +553,8 @@ function generateAutoThemeSVG(
     transform-origin: center;
   }
   @keyframes scan-sweep {
-    from { transform: translateY(var(--scan-start, ${s(20)}px)); }
-    to { transform: translateY(var(--scan-end, ${s(260)}px)); }
+    from { transform: translateY(var(--scan-start, ${s(0)}px)); }
+    to { transform: translateY(var(--scan-end, ${s(240)}px)); }
   }
   .title { font-family: ${selectedFont || '"Syncopate", sans-serif'}; fill: var(--cp-text); font-size: ${fs(18)}px; letter-spacing: ${fs(6)}px; font-weight: 400; opacity: 0.8; }
   .stats { font-family: ${statsFont}; fill: var(--cp-text); font-size: ${fs(42)}px; font-weight: 500; letter-spacing: 0; }
@@ -567,7 +567,7 @@ function generateAutoThemeSVG(
     .scan-line {
       animation: none !important;
       transition: none !important;
-      transform: translateY(var(--scan-start, ${s(20)}px)) !important;
+      transform: translateY(var(--scan-start, ${s(0)}px)) !important;
     }
   }
   </style>
@@ -586,12 +586,12 @@ ${
 
   <rect
     x="${s(100)}"
-    y="${s(60)}"
+    y="${s(80)}"
     width="${s(400)}"
     height="${sf}"
     class="cp-accent-fill scan-line"
     fill-opacity="0.3"
-    style="--scan-speed: ${params.speed || '8s'}; --scan-start: ${s(20)}px; --scan-end: ${s(260)}px;"
+    style="--scan-speed: ${params.speed || '8s'}; --scan-start: ${s(0)}px; --scan-end: ${s(240)}px;"
   />
 </svg>
 `;
@@ -913,13 +913,13 @@ export function generateNotFoundSVG(
     .ghost-pulse { animation: gp 2.6s ease-in-out infinite; }
     .scan-line { animation: scan-sweep var(--scan-speed, 8s) linear infinite; }
     @keyframes gp { 0%,100%{opacity:.55} 50%{opacity:1} }
-    @keyframes scan-sweep { from { transform: translateY(20px); } to { transform: translateY(260px); } }
+    @keyframes scan-sweep { from { transform: translateY(0px); } to { transform: translateY(240px); } }
     @media (prefers-reduced-motion: reduce) {
       .ghost-pulse { animation: none !important; transition: none !important; }
       .scan-line {
         animation: none !important;
         transition: none !important;
-        transform: translateY(20px) !important;
+        transform: translateY(0px) !important;
       }
     }
   </style>
@@ -932,7 +932,7 @@ export function generateNotFoundSVG(
 
   <rect width="${SVG_WIDTH}" height="${SVG_HEIGHT}" rx="${radius}" fill="url(#ghostFade)"/>
 
-  <rect x="100" y="60" width="400" height="1" class="scan-line" fill="${accent}" fill-opacity="0.12" style="--scan-speed: ${speed};"/>
+  <rect x="100" y="80" width="400" height="1" class="scan-line" fill="${accent}" fill-opacity="0.12" style="--scan-speed: ${speed};"/>
 
   <text x="300" y="50" text-anchor="middle" class="title">${safeName}</text>
 
@@ -1158,8 +1158,8 @@ function generateAutoThemeVersusSVG(
     transform-origin: center;
   }
   @keyframes scan-sweep {
-    from { transform: translateY(var(--scan-start, ${s(20)}px)); }
-    to { transform: translateY(var(--scan-end, ${s(260)}px)); }
+    from { transform: translateY(var(--scan-start, ${s(0)}px)); }
+    to { transform: translateY(var(--scan-end, ${s(240)}px)); }
   }
   .title { font-family: ${selectedFont || '"Syncopate", sans-serif'}; fill: var(--cp-text); font-size: ${fs(18)}px; letter-spacing: ${fs(6)}px; font-weight: 400; opacity: 0.8; }
   .stats { font-family: ${statsFont}; fill: var(--cp-text); font-size: ${fs(42)}px; font-weight: 500; letter-spacing: 0; }
@@ -1172,7 +1172,7 @@ function generateAutoThemeVersusSVG(
     .scan-line {
       animation: none !important;
       transition: none !important;
-      transform: translateY(var(--scan-start, ${s(20)}px)) !important;
+      transform: translateY(var(--scan-start, ${s(0)}px)) !important;
     }
   }
   </style>
@@ -1298,7 +1298,7 @@ export function generateRateLimitSVG(
 
   <rect width="${SVG_WIDTH}" height="${SVG_HEIGHT}" rx="${radius}" fill="url(#ghostFade)"/>
 
-  <rect x="100" y="60" width="400" height="1" fill="${accent}" fill-opacity="0.12">
+  <rect x="100" y="80" width="400" height="1" fill="${accent}" fill-opacity="0.12">
     <animate attributeName="y" values="80;320;80" dur="${speed}" repeatCount="indefinite"/>
   </rect>
 
