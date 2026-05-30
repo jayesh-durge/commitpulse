@@ -948,7 +948,10 @@ export async function getFullDashboardData(username: string, options: FetchOptio
     },
   };
 
+  // Flatten contribution days once and reuse across dashboard-derived
+  // computations such as activity and commit clock generation.
   const allDays = calendarData.weeks.flatMap((w) => w.contributionDays);
+
   const activity = allDays.map((day) => {
     let intensity: 0 | 1 | 2 | 3 | 4 = 0;
     if (day.contributionCount > 0) intensity = 1;
