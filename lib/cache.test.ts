@@ -29,6 +29,29 @@ describe('TTLCache', () => {
       expect(cache.get('user')).toBeNull();
       cache.destroy();
     });
+
+    it('handles deeply nested object values without crashing', () => {
+      const cache = new TTLCache<{
+        level1: {
+          level2: {
+            level3: string;
+          };
+        };
+      }>();
+
+      const nested = {
+        level1: {
+          level2: {
+            level3: 'value',
+          },
+        },
+      };
+
+      expect(() => cache.set('nested', nested, 60_000)).not.toThrow();
+      expect(cache.get('nested')).toEqual(nested);
+
+      cache.destroy();
+    });
   });
 
   describe('clear()', () => {
