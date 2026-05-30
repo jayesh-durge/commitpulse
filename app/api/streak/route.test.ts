@@ -531,6 +531,19 @@ describe('GET /api/streak', () => {
       });
     });
 
+    it('returns 400 when custom from date is after custom to date', async () => {
+      const response = await GET(
+        makeRequest({ user: 'octocat', from: '2025-12-31', to: '2025-01-01' })
+      );
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.details.fieldErrors.to[0]).toContain(
+        '"to" date must be after or equal to "from" date'
+      );
+      expect(fetchGitHubContributions).not.toHaveBeenCalled();
+    });
+
     it('functions normally when the year parameter is missing', async () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
 

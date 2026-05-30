@@ -60,7 +60,7 @@ function dimensionParam(name: string, min: number, max: number) {
 
 const GITHUB_USERNAME_REGEX = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9]))*$/;
 
-export const streakParamsSchema = z.object({
+const baseStreakParamsSchema = z.object({
   // Required — missing user surfaces as "Missing" to match existing tests
   user: z
     .string({ error: 'Missing user parameter' })
@@ -242,6 +242,14 @@ export const streakParamsSchema = z.object({
     .transform((val) => val === 'true' || val === '1'),
   entrance: z.enum(['rise', 'fade', 'slide', 'none']).catch('rise').default('rise'),
 });
+
+export const streakParamsSchema = baseStreakParamsSchema.refine(
+  (data) => !data.from || !data.to || Date.parse(data.from) <= Date.parse(data.to),
+  {
+    message: '"to" date must be after or equal to "from" date',
+    path: ['to'],
+  }
+);
 
 export const githubParamsSchema = z.object({
   username: z
