@@ -8,6 +8,7 @@ import {
   escapeXML,
   getSizeScale,
   truncateUsername,
+  deterministicRandom,
 } from './generator';
 import type { BadgeParams, ContributionCalendar, StreakStats, MonthlyStats } from '../../types';
 import { hexColor } from './sanitizer';
@@ -1442,5 +1443,26 @@ describe('Radar Scan Line Animation Alignment', () => {
     const geometryBaseline = extractGeometry(svgBaseline);
     const geometryLong = extractGeometry(svgLong);
     expect(geometryLong).toEqual(geometryBaseline);
+  });
+});
+describe('deterministicRandom', () => {
+  it('returns the same value for the same seed (determinism)', () => {
+    const seed = 'test-seed-42';
+    expect(deterministicRandom(seed)).toBe(deterministicRandom(seed));
+  });
+
+  it('result is always in the range [0, 1)', () => {
+    const seeds = ['hello', 'world', '', 'abc:def:0:offsetX', '12345'];
+    for (const seed of seeds) {
+      const result = deterministicRandom(seed);
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThan(1);
+    }
+  });
+
+  it('returns different values for different seeds', () => {
+    const a = deterministicRandom('seed-alpha');
+    const b = deterministicRandom('seed-beta');
+    expect(a).not.toBe(b);
   });
 });
