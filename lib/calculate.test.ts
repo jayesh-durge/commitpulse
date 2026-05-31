@@ -737,6 +737,79 @@ describe('calculateStreak', () => {
     expect(result.longestStreak).toBe(1);
     expect(result.totalContributions).toBe(1);
   });
+
+  it('simulates a timeline with commits exclusively on Saturdays and Sundays and verifies streak metrics', () => {
+    // 2024-01-01 is a Monday.
+    // Index: 0 (Mon), 1 (Tue), 2 (Wed), 3 (Thu), 4 (Fri), 5 (Sat), 6 (Sun)
+    // Custom calendar with commits ONLY on Sat and Sun:
+    // Week 1: 0, 0, 0, 0, 0, 1, 1 (Sat Jan 6, Sun Jan 7)
+    // Week 2: 0, 0, 0, 0, 0, 1, 1 (Sat Jan 13, Sun Jan 14)
+    // Week 3: 0, 0, 0, 0, 0, 1, 1 (Sat Jan 20, Sun Jan 21)
+    const calendar = buildCalendar([
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1, // Week 1 (Jan 1 to Jan 7)
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1, // Week 2 (Jan 8 to Jan 14)
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1, // Week 3 (Jan 15 to Jan 21)
+    ]);
+
+    // Scenario A: Evaluate on Sunday, Jan 21, 2024.
+    // Sunday has a commit, so current streak is 2 (Sat Jan 20 & Sun Jan 21).
+    // Longest streak is 2.
+    const resultSunday = calculateStreak(calendar, 'UTC', new Date('2024-01-21T12:00:00Z'));
+    expect(resultSunday.currentStreak).toBe(2);
+    expect(resultSunday.longestStreak).toBe(2);
+    expect(resultSunday.totalContributions).toBe(6);
+
+    // Scenario B: Evaluate on Monday, Jan 22, 2024 (using extended calendar).
+    // We add Monday (index 21) with 0 commits.
+    const extendedCalendar = buildCalendar([
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0, // Monday, Jan 22 (0 commits)
+    ]);
+    // Today (Monday) has 0 commits, yesterday (Sunday) has 1 commit.
+    // Under a grace period of 1, the streak is kept alive.
+    // Current streak should be 2. Longest streak is 2.
+    const resultMonday = calculateStreak(extendedCalendar, 'UTC', new Date('2024-01-22T12:00:00Z'));
+    expect(resultMonday.currentStreak).toBe(2);
+    expect(resultMonday.longestStreak).toBe(2);
+  });
 });
 
 describe('calculateStreak — timezone awareness', () => {
