@@ -279,6 +279,7 @@ function renderTowers(
   text: string,
   sf: number,
   isAutoTheme: boolean = false,
+  opacity: number = 1.0,
   animate: boolean = true
 ): string {
   let towers = '';
@@ -316,9 +317,10 @@ function renderTowers(
       topFillAttr = leftRightFillAttr;
     }
 
-    let leftFaceOpacity = t.faceOpacity.left;
-    let rightFaceOpacity = t.faceOpacity.right;
-    let topFaceOpacity = t.faceOpacity.top;
+    // opacity scalar: clamp 0.1–1.0, applied globally to all tower faces
+    let leftFaceOpacity = Math.round(t.faceOpacity.left * opacity * 100) / 100;
+    let rightFaceOpacity = Math.round(t.faceOpacity.right * opacity * 100) / 100;
+    let topFaceOpacity = Math.round(t.faceOpacity.top * opacity * 100) / 100;
 
     if (!isGhost && t.intensityLevel > 0 && params.shading === true) {
       const mult = opacityMultipliers[t.intensityLevel - 1];
@@ -566,7 +568,16 @@ export function generateSVG(
     computeTowers(calendar, params.scale, stats.todayDate, params.mode),
     sf
   );
-  const towers = renderTowers(towerData, params, accent, text, sf, false, animate);
+  const towers = renderTowers(
+    towerData,
+    params,
+    accent,
+    text,
+    sf,
+    false,
+    params.opacity ?? 1.0,
+    animate
+  );
 
   const mainAccent = Array.isArray(accent)
     ? accent[accent.length - 1] || '00ffaa'
@@ -618,7 +629,7 @@ function generateAutoThemeSVG(
     computeTowers(calendar, params.scale, stats.todayDate, params.mode),
     sf
   );
-  const towers = renderTowers(towerData, params, '', '', sf, true);
+  const towers = renderTowers(towerData, params, '', '', sf, true, params.opacity ?? 1.0);
 
   const s = createScaler(sf);
   const fs = (n: number): number => Math.round(n * sf * 10) / 10;
@@ -1884,8 +1895,8 @@ export function generateVersusSVG(
     sf
   );
 
-  const towers1 = renderTowers(towerData1, params, accent, text, sf, false);
-  const towers2 = renderTowers(towerData2, params, accent, text, sf, false);
+  const towers1 = renderTowers(towerData1, params, accent, text, sf, false, params.opacity ?? 1.0);
+  const towers2 = renderTowers(towerData2, params, accent, text, sf, false, params.opacity ?? 1.0);
 
   const s = createScaler(sf);
   const unit = params.mode === 'loc' ? 'lines of code' : 'total contributions';
