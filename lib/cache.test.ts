@@ -578,6 +578,28 @@ describe('TTLCache', () => {
       cache.destroy();
     });
   });
+
+  it('stores and retrieves values with unicode and emoji cache keys', () => {
+    const cache = new TTLCache<string>();
+
+    const unicodeKey = 'cache_🔥_key';
+    const emojiKey = '🚀_rocket_🚀';
+    const mixedKey = 'user_👤_data_🔐';
+
+    cache.set(unicodeKey, 'fire-value', 60_000);
+    cache.set(emojiKey, 'rocket-value', 60_000);
+    cache.set(mixedKey, 'secure-data', 60_000);
+
+    expect(cache.get(unicodeKey)).toBe('fire-value');
+    expect(cache.get(emojiKey)).toBe('rocket-value');
+    expect(cache.get(mixedKey)).toBe('secure-data');
+
+    expect(cache.has(unicodeKey)).toBe(true);
+    expect(cache.has(emojiKey)).toBe(true);
+    expect(cache.has(mixedKey)).toBe(true);
+
+    cache.destroy();
+  });
 });
 
 import { DistributedCache } from './cache';
