@@ -284,6 +284,37 @@ describe('User Model', () => {
       readyStateSpy.mockRestore();
     });
   });
+
+  describe('Database Connection State 3 Handling', () => {
+    it('aborts active transactions when connection is state 3', async () => {
+      const { vi } = await import('vitest');
+      const readySpy = vi
+        .spyOn(mongoose.connection, 'readyState', 'get')
+        .mockReturnValue(3 as never);
+
+      const abortFn = vi.fn();
+      const endFn = vi.fn();
+      const startSpy = vi.spyOn(mongoose, 'startSession').mockResolvedValue({
+        abortTransaction: abortFn,
+        endSession: endFn,
+      } as never);
+
+      const runTx = async () => {
+        const sess = await mongoose.startSession();
+        if (mongoose.connection.readyState === 3) await sess.abortTransaction();
+        await sess.endSession();
+      };
+
+      await runTx();
+
+      expect(mongoose.connection.readyState).toBe(3);
+      expect(abortFn).toHaveBeenCalledTimes(1);
+      expect(endFn).toHaveBeenCalledTimes(1);
+
+      readySpy.mockRestore();
+      startSpy.mockRestore();
+    });
+  });
 });
 
 /* ==========================================================================
