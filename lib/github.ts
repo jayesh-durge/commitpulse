@@ -747,11 +747,12 @@ export async function getOrgDashboardData(orgName: string, options: FetchOptions
     throw new Error('This endpoint is strictly for organizations.');
   if (membersOrError instanceof Error) throw membersOrError;
 
-  const members = membersOrError;
+  // Limit active members to first 60 to protect shared token rate limit
+  const activeMembers = members.slice(0, 60);
 
   // Fetch calendars for all members concurrently with capped concurrency to avoid 429s/timeouts
   const calendars = (
-    await runCappedConcurrency(members, 5, (member) =>
+    await runCappedConcurrency(activeMembers, 5, (member) =>
       fetchGitHubContributions(member, options)
         .then((data) => data.calendar)
         .catch(() => null)
