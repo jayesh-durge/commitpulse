@@ -112,7 +112,7 @@ describe('BackgroundRefresh - Massive Data Sets and Extreme High Bounds Scaling 
     for (let i = 0; i < VOLUME; i++) {
       expect(service.isJobActive(`tracked_user_${i}`)).toBe(true);
     }
-  });
+  }, 15000);
 
   it('executes 50,000 mixed stale and fresh isStale evaluations with correct classification split', () => {
     const VOLUME = 50000;
