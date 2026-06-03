@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi } from 'vitest';
@@ -55,12 +55,20 @@ describe('FeatureCards - massive scaling', () => {
   });
 
   it('renders FeatureCardsSection scaling heading', () => {
-    render(<FeatureCardsSection><div>Scale Child</div></FeatureCardsSection>);
+    render(
+      <FeatureCardsSection>
+        <div>Scale Child</div>
+      </FeatureCardsSection>
+    );
     expect(screen.getByText('Why CommitPulse?')).toBeInTheDocument();
   });
 
   it('renders FeatureCardsSection massive children safely', () => {
-    render(<FeatureCardsSection><div>Massive Node</div></FeatureCardsSection>);
+    render(
+      <FeatureCardsSection>
+        <div>Massive Node</div>
+      </FeatureCardsSection>
+    );
     expect(screen.getByText('Massive Node')).toBeInTheDocument();
   });
 });
