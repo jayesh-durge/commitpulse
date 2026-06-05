@@ -141,7 +141,7 @@ export class RateLimiter {
    * rateLimiter.reset("192.168.1.1");
    */
   async reset(ip: string): Promise<void> {
-    await this.cache.delete(`ratelimit:${ip}`);
+    await this.cache.delete(ip);
   }
 
   /**

@@ -30,7 +30,7 @@ import { PopularRepos } from './PopularPinnnedRepos';
 import PRInsightsClient from './PRInsights/PRInsightsClient';
 
 // Define the dashboard data structure
-interface DashboardData {
+export interface DashboardData {
   profile: {
     username: string;
     name: string;
