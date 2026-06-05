@@ -3,7 +3,6 @@ import type {
   ContributionDay,
   ExtendedContributionData,
   RepoContribution,
-  ContributionWeek,
   GraphNode,
   GraphLink,
 } from '@/types';
@@ -537,50 +536,6 @@ export function displayName(profile: GitHubUserProfile): string {
  * DATA FETCHING
  * ========================================================================== */
 
-function mergeCalendars(
-  oldCal: ContributionCalendar,
-  newCal: ContributionCalendar,
-  authoritativeTotal?: number
-): ContributionCalendar {
-  const dayMap = new Map<string, ContributionDay>();
-
-  for (const week of oldCal.weeks) {
-    for (const day of week.contributionDays) {
-      dayMap.set(day.date, day);
-    }
-  }
-
-  for (const week of newCal.weeks) {
-    for (const day of week.contributionDays) {
-      dayMap.set(day.date, day);
-    }
-  }
-
-  const sortedDays = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
-
-  const mergedWeeks: ContributionWeek[] = [];
-  let currentWeek: ContributionWeek = { contributionDays: [] };
-
-  for (const day of sortedDays) {
-    const dateObj = new Date(day.date);
-    if (currentWeek.contributionDays.length > 0 && dateObj.getUTCDay() === 0) {
-      mergedWeeks.push(currentWeek);
-      currentWeek = { contributionDays: [] };
-    }
-    currentWeek.contributionDays.push(day);
-  }
-  if (currentWeek.contributionDays.length > 0) {
-    mergedWeeks.push(currentWeek);
-  }
-
-  const calculatedTotal = sortedDays.reduce((sum, d) => sum + d.contributionCount, 0);
-
-  return {
-    totalContributions: authoritativeTotal ?? calculatedTotal,
-    weeks: mergedWeeks,
-  };
-}
-
 export async function fetchGitHubContributions(
   username: string,
   options: FetchOptions = {}
@@ -595,13 +550,11 @@ export async function fetchGitHubContributions(
       : true;
   };
 
-  const load = async (cached: ExtendedContributionData | null) => {
-    return fetchContributionsUncached(username, key, options, cached);
-  };
+  const load = () => fetchContributionsUncached(username, key, options);
 
   if (options.bypassCache || options.forceRefresh) {
     try {
-      return await load(null);
+      return await load();
     } catch (err: unknown) {
       const staleData = await contributionsCache.get(key);
       if (staleData) {
@@ -639,18 +592,8 @@ export async function fetchGitHubContributions(
 async function fetchContributionsUncached(
   username: string,
   key: string,
-  options: FetchOptions,
-  cached: ExtendedContributionData | null
+  options: FetchOptions
 ): Promise<ExtendedContributionData> {
-  const isDeltaSync = cached && cached.calendar.lastSyncedAt && !options.bypassCache;
-  let queryFrom = options.from;
-
-  if (isDeltaSync) {
-    const lastSyncedDate = new Date(cached.calendar.lastSyncedAt!);
-    lastSyncedDate.setUTCDate(lastSyncedDate.getUTCDate() - 1);
-    queryFrom = lastSyncedDate.toISOString();
-  }
-
   const query = `
       query($login: String!, $from: DateTime, $to: DateTime) {
         user(login: $login) {
@@ -687,7 +630,7 @@ async function fetchContributionsUncached(
     headers: getHeaders(),
     body: JSON.stringify({
       query,
-      variables: { login: username, from: queryFrom, to: options.to },
+      variables: { login: username, from: options.from, to: options.to },
     }),
     cache: 'no-store',
     signal: options.signal,
@@ -738,18 +681,9 @@ async function fetchContributionsUncached(
     };
   }
 
-  let totalPRs = data.data.user.contributionsCollection?.totalPullRequestContributions || 0;
-  let totalIssues = data.data.user.contributionsCollection?.totalIssueContributions || 0;
+  const totalPRs = data.data.user.contributionsCollection?.totalPullRequestContributions || 0;
+  const totalIssues = data.data.user.contributionsCollection?.totalIssueContributions || 0;
 
-  if (isDeltaSync && cached) {
-    calendar = mergeCalendars(
-      cached.calendar,
-      calendar,
-      data.data.user.contributionsCollection.contributionCalendar.totalContributions
-    );
-    totalPRs += cached.totalPRs || 0;
-    totalIssues += cached.totalIssues || 0;
-  }
   // Inject deterministic Lines of Code (LoC) approximation
   calendar.weeks.forEach((week) => {
     week.contributionDays.forEach((day) => {
@@ -780,7 +714,7 @@ async function fetchContributionsUncached(
 
   calendar.lastSyncedAt = new Date().toISOString();
 
-  // Cache for 7 days to enable delta syncs, staleness is handled logically
+  // Cache for 7 days so a failed refresh can fall back to stale data; freshness is enforced via lastSyncedAt
   const LONG_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
   if (!options.bypassCache) {
     await contributionsCache.set(
