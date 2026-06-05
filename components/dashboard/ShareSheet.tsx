@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { DashboardExportData } from '@/types/dashboard';
 import { useShareActions } from '@/hooks/useShareActions';
+import { activityToTowers, generateMonolithSTL } from '@/lib/export3d';
 
 type OptionState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -215,7 +216,7 @@ endsolid commitpulse_monolith`;
       key: 'stl',
       icon: Box,
       label: 'Download 3D STL',
-      description: 'Print your monolith in 3D',
+      description: 'Export a 3D heightmap of your contributions',
       gradient: 'bg-zinc-800',
       glow: 'transparent',
       action: handleDownloadSTL,
