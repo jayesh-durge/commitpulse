@@ -1153,7 +1153,7 @@ export async function fetchContributedRepos(
       }
     `;
 
-    const res = await fetchWithRetry(GITHUB_GRAPHQL_URL, {
+    const res = await fetchGraphQLWithRetry(GITHUB_GRAPHQL_URL, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -1164,10 +1164,29 @@ export async function fetchContributedRepos(
       signal: options.signal,
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      throwIfRateLimited(res);
+      throw new Error(
+        `GitHub GraphQL API returned status ${res.status} after ${MAX_RETRIES} retries`
+      );
+    }
+
     const data = await res.json();
-    const result = data?.data?.user?.repositoriesContributedTo?.nodes || [];
-    return result;
+
+    if (data?.errors !== undefined) {
+      if (Array.isArray(data.errors)) {
+        const isRateLimit = data.errors.some((e: unknown) => {
+          const err = e as { message?: string; type?: string };
+          return err?.message?.toLowerCase().includes('rate limit') || err?.type === 'RATE_LIMITED';
+        });
+        if (isRateLimit) {
+          throw new Error('API Rate Limit Exceeded');
+        }
+      }
+      throw new Error(getGraphQLErrorMessage(data.errors));
+    }
+
+    return data?.data?.user?.repositoriesContributedTo?.nodes || [];
   };
 
   if (options.bypassCache) return load();

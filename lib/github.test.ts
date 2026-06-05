@@ -800,8 +800,14 @@ describe('fetchUserRepos', () => {
 });
 
 describe('fetchContributedRepos', () => {
-  beforeEach(() => vi.spyOn(global, 'fetch'));
-  afterEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    vi.spyOn(global, 'fetch');
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   it('returns contributed repos on success', async () => {
     const mockNodes = [
@@ -831,16 +837,47 @@ describe('fetchContributedRepos', () => {
     expect(result).toEqual(mockNodes);
   });
 
-  it('returns empty array when fetch fails', async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }));
-    const result = await fetchContributedRepos('octocat');
-    expect(result).toEqual([]);
-  });
-
   it('returns empty array if data structure is missing', async () => {
     vi.mocked(fetch).mockResolvedValue(mockResponse({ data: null }));
     const result = await fetchContributedRepos('octocat');
     expect(result).toEqual([]);
+  });
+
+  it('throws (rather than returning []) when the request fails so the empty result is not cached', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }));
+
+    const promise = fetchContributedRepos('octocat');
+    const assertion = expect(promise).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(3500);
+    await assertion;
+  });
+
+  it('throws on a rate-limited GraphQL 200 response instead of returning []', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse({ errors: [{ type: 'RATE_LIMITED', message: 'API rate limit exceeded' }] })
+    );
+
+    const promise = fetchContributedRepos('octocat');
+    const assertion = expect(promise).rejects.toThrow('API Rate Limit Exceeded');
+    await vi.advanceTimersByTimeAsync(3500);
+    await assertion;
+  });
+
+  it('does not cache the failure: a later call refetches and can succeed', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }));
+
+    const failing = fetchContributedRepos('octocat');
+    const assertion = expect(failing).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(3500);
+    await assertion;
+
+    const mockNodes = [{ name: 'r1', nameWithOwner: 'o/r1' }];
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse({ data: { user: { repositoriesContributedTo: { nodes: mockNodes } } } })
+    );
+
+    const result = await fetchContributedRepos('octocat');
+    expect(result).toEqual(mockNodes);
   });
 });
 
