@@ -249,4 +249,32 @@ describe('RateLimiter', () => {
     expect(await limiter.check(ip)).toBe(true);
     expect(await limiter.remaining(ip)).toBe(2);
   });
+
+  it('reset() sends DEL via pipeline to KV using ratelimit_class:<ip> key', async () => {
+    // Verifies that when KV env vars are set, reset() uses the pipeline endpoint
+    // with the correct key prefix — matching the key used in checkWithResult().
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ result: 1 }] });
+    vi.stubGlobal('fetch', fetchMock);
+
+    process.env.KV_REST_API_URL = 'https://fake-kv.example.com';
+    process.env.KV_REST_API_TOKEN = 'fake-token';
+
+    const limiter = new RateLimiter(3, 60000);
+    const ip = '8.8.8.8';
+
+    await limiter.reset(ip);
+
+    const resetCall = fetchMock.mock.calls.find(
+      (args: unknown[]) => typeof args[0] === 'string' && (args[0] as string).includes('/pipeline')
+    );
+    expect(resetCall).toBeTruthy();
+
+    const body = JSON.parse((resetCall![1] as { body: string }).body) as unknown[][];
+    expect(body).toEqual([['DEL', `ratelimit_class:${ip}`]]);
+
+    // Cleanup
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_REST_API_TOKEN;
+    vi.unstubAllGlobals();
+  });
 });

@@ -309,6 +309,9 @@ export default function LandingPage() {
   const [instantUsername, setInstantUsername] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const resetCopiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollToGuideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [badgeResult, setBadgeResult] = useState<{
     username: string;
     status: 'loaded' | 'error';
@@ -425,8 +428,28 @@ export default function LandingPage() {
     fetchDetails();
   }, [debouncedUsername, mounted]);
 
+  const clearCopyTimers = () => {
+    if (resetCopiedTimeoutRef.current) {
+      clearTimeout(resetCopiedTimeoutRef.current);
+      resetCopiedTimeoutRef.current = null;
+    }
+    if (scrollToGuideTimeoutRef.current) {
+      clearTimeout(scrollToGuideTimeoutRef.current);
+      scrollToGuideTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearCopyTimers();
+    };
+  }, []);
+
   const copyToClipboard = async () => {
     if (trimmedUsername.length === 0) return;
+
+    // Prevent overlapping timers from previous clicks
+    clearCopyTimers();
 
     try {
       await navigator.clipboard.writeText(markdown);
@@ -438,10 +461,14 @@ export default function LandingPage() {
     trackUser(trimmedUsername);
     addSearch(trimmedUsername);
     setCopied(true);
-    setTimeout(() => {
+
+    scrollToGuideTimeoutRef.current = setTimeout(() => {
       guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 80);
-    setTimeout(() => setCopied(false), 3000);
+
+    resetCopiedTimeoutRef.current = setTimeout(() => {
+      setCopied(false);
+    }, 50000);
   };
 
   const selectDemoUser = (name: string) => {
@@ -535,7 +562,6 @@ export default function LandingPage() {
                     <Search size={18} />
                   </span>
                   <input
-                    suppressHydrationWarning
                     type="text"
                     placeholder="Enter GitHub Username"
                     aria-label="Enter GitHub username to generate badge"
@@ -575,7 +601,6 @@ export default function LandingPage() {
 
                 {/* Primary CTA: Generate Badge */}
                 <button
-                  suppressHydrationWarning
                   type="submit"
                   disabled={!mounted || trimmedUsername.length === 0}
                   className={`relative flex min-w-[180px] items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-4 text-sm font-bold transition-all duration-300 transform cursor-pointer hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed ${
@@ -970,7 +995,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-100px' }}
                 transition={{ delay: idx * 0.15, duration: 0.6 }}
-                className="relative z-10 flex flex-col items-center text-center p-6 rounded-3xl border border-zinc-300 dark:border-white/5 bg-white dark:bg-black/40 backdrop-blur-xl hover:border-emerald-500/20 hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-all duration-500 group"
+                className="relative z-10 flex flex-col items-center text-center p-6 rounded-3xl border border-zinc-300 dark:border-white/5 bg-white dark:bg-white/[0.04] backdrop-blur-xl hover:border-emerald-500/40 hover:bg-zinc-50 dark:hover:bg-white/[0.08] dark:hover:border-emerald-500/40 dark:hover:shadow-[0_0_20px_rgba(0,230,180,0.1)] transition-all duration-500 group"
               >
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 rounded-2xl border border-white/10 bg-zinc-950 font-bold text-sm tracking-wider text-white shadow-xl group-hover:border-emerald-500/30 transition-all duration-300">
                   <span
