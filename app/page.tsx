@@ -7,8 +7,8 @@ import { useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
+
 import {
-  X,
   Flame,
   Trophy,
   GitCommit,
@@ -19,6 +19,9 @@ import {
   Copy,
   ExternalLink,
 } from 'lucide-react';
+
+import { X } from 'lucide-react';
+import useLocalStorage from '@/hooks/useLocalStorage';
 
 import { CommitPulseLogo } from '@/components/commitpulse-logo';
 import { CustomizeCTA } from './components/CustomizeCTA';
@@ -302,7 +305,7 @@ export default function LandingPage() {
     return name;
   };
 
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useLocalStorage('commitpulse:last-user', '');
   const [instantUsername, setInstantUsername] = useState('');
   const [copied, setCopied] = useState(false);
 
