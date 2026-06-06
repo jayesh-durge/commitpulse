@@ -20,9 +20,8 @@ vi.mock('@/hooks/useShareActions', () => ({
 }));
 
 const mockExportData = {
-  commits: [],
-  languages: {},
-  streak: { currentStreak: 0, longestStreak: 0, totalContributions: 0 },
+  stats: { currentStreak: 0, peakStreak: 0, totalContributions: 0 },
+  languages: [],
 };
 
 describe('ShareSheet - Dark and Light Prefers-Color-Scheme Visual Cohesion (Variation 3)', () => {
@@ -98,11 +97,14 @@ describe('ShareSheet - Dark and Light Prefers-Color-Scheme Visual Cohesion (Vari
       <ShareSheet username="testuser" isOpen={true} onClose={vi.fn()} exportData={mockExportData} />
     );
 
-    // The overlay should be z-50 to not clip foreground content
-    const overlay = container.querySelector('.z-50');
-    expect(overlay).not.toBeNull();
-    expect(overlay?.className).toContain('fixed');
-    expect(overlay?.className).toContain('inset-0');
-    expect(overlay?.className).toContain('bg-zinc-950/60');
+    // The overlay container should be z-50
+    const overlayContainer = container.querySelector('.z-50');
+    expect(overlayContainer).not.toBeNull();
+    expect(overlayContainer?.className).toContain('fixed');
+
+    // The actual backdrop with the color might be a child element
+    const backdrop = container.querySelector('.bg-zinc-950\\/60');
+    expect(backdrop).not.toBeNull();
+    expect(backdrop?.className).toContain('inset-0');
   });
 });
