@@ -70,6 +70,7 @@ const mockData: ActivityData[] = [
 describe('Heatmap Error Resilience', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('maintains hydration stability during repeated renders', () => {
@@ -85,7 +86,7 @@ describe('Heatmap Error Resilience', () => {
       </TestErrorBoundary>
     );
 
-    expect(screen.getByText(/contribution heatmap/i)).toBeDefined();
+    expect(screen.getByText(/contribution heatmap/i)).toBeInTheDocument();
   });
 
   it('renders fallback UI when nested runtime exception occurs', () => {
