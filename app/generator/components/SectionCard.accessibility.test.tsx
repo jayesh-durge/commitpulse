@@ -3,7 +3,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { SectionCard } from './SectionCard';
+import { SectionCard, FieldLabel } from './SectionCard';
 
 describe('SectionCard Accessibility', () => {
   /**
@@ -27,16 +27,22 @@ describe('SectionCard Accessibility', () => {
     const badgeCount = 5;
 
     render(
-      <SectionCard title={titleText} description={descText} badge={badgeCount}>
+      <SectionCard title={titleText} icon="📝" description={descText} badge={badgeCount}>
         <div role="region" aria-label="Profile Form Fields">
-          <label htmlFor="name-input" id="name-label">
-            Full Name
-          </label>
+          <FieldLabel>
+            <label htmlFor="name-input" id="name-label">
+              Full Name
+            </label>
+          </FieldLabel>
           <input id="name-input" aria-labelledby="name-label" aria-describedby="name-helper" />
           <p id="name-helper">Please use your professional name.</p>
         </div>
       </SectionCard>
     );
+
+    // Verify the icon is rendered
+    const icon = screen.getByText('📝');
+    expect(icon).toBeInTheDocument();
 
     // Act & Assert
     // Verify the card toggle control is identified as a button and carries its title
