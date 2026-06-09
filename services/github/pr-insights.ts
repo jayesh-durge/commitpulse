@@ -122,6 +122,7 @@ async function fetchPRInsightsUncached(username: string): Promise<PRInsightData>
   let allAuthoredPRs: any[] = [];
   let hasNextPage = true;
   let after: string | null = null;
+  let reviewsGivenCount = 0;
   const MAX_PAGES = 10; // Cap at 1000 PRs (10 pages x 100)
 
   for (let page = 0; page < MAX_PAGES && hasNextPage; page++) {
@@ -149,7 +150,7 @@ async function fetchPRInsightsUncached(username: string): Promise<PRInsightData>
     after = json.data?.authored?.pageInfo?.endCursor || null;
 
     if (page === 0) {
-      var reviewsGivenCount = json.data?.reviewed?.issueCount || 0;
+      reviewsGivenCount = json.data?.reviewed?.issueCount || 0;
     }
   }
 
