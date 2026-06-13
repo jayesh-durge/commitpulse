@@ -58,8 +58,6 @@ describe('DELETE /api/notify', () => {
 
     vi.mocked(verifyGitHubOwner).mockResolvedValue({
       verified: true,
-      status: 200,
-      message: 'verified',
     });
 
     vi.mocked(Notification.findOne).mockReturnValue({
