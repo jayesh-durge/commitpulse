@@ -483,7 +483,7 @@ export async function GET(request: Request) {
         ? 'public, s-maxage=31536000, immutable'
         : `public, s-maxage=${secondsToMidnight}, stale-while-revalidate=86400`;
 
-    const etag = crypto.createHash('sha1').update(svg).digest('hex');
+    const etag = crypto.createHash('sha256').update(svg).digest('hex');
     const weakEtag = `W/"${etag}"`;
     const ifNoneMatch = request.headers.get('if-none-match');
 
