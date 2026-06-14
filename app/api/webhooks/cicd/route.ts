@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   parseWebhookEvent,
@@ -16,12 +17,11 @@ function verifyGitHubSignature(request: NextRequest, payload: string): boolean {
   const secret = process.env.WEBHOOK_SECRET || '';
   if (!secret) return false;
 
-  const crypto = require('crypto');
-  const hmac = crypto.createHmac('sha256', secret);
+  const hmac = createHmac('sha256', secret);
   hmac.update(payload);
   const expected = `sha256=${hmac.digest('hex')}`;
 
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
 }
 
 export async function POST(request: NextRequest) {
@@ -29,10 +29,7 @@ export async function POST(request: NextRequest) {
     const payload = await request.text();
 
     if (!verifyGitHubSignature(request, payload)) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const event = JSON.parse(payload);
@@ -62,10 +59,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Webhook processing error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process webhook' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to process webhook' }, { status: 500 });
   }
 }
 

@@ -1,8 +1,5 @@
 import { DistributedCache } from '@/lib/cache';
-import type {
-  CIWorkflowRun,
-  CIInsights,
-} from '@/types/ci-analytics';
+import type { CIWorkflowRun, CIInsights } from '@/types/ci-analytics';
 
 interface WebhookPayload {
   action?: string;
@@ -102,10 +99,12 @@ function extractWorkflowEvent(payload: WebhookPayload): CIEvent | null {
 }
 
 function extractCheckRunEvent(payload: WebhookPayload): CIEvent | null {
-  if (!payload.check_run || !payload.repository) return null;
+  if (!payload.check_run) return null;
 
   const checkRun = payload.check_run;
-  const repo = payload.repository;
+  const repo = payload.workflow_run?.repository;
+
+  if (!repo) return null;
 
   return {
     type: 'check_run',
@@ -133,7 +132,7 @@ export function cacheEvent(event: CIEvent): void {
 
 export async function evaluateAlerts(event: CIEvent): Promise<void> {
   const alertKey = `alert:${event.repository}`;
-  const config = alertCache.get(alertKey);
+  const config = await alertCache.get(alertKey);
 
   if (!config || !config.enabled) return;
 
@@ -208,7 +207,11 @@ export function generateCIReport(
 ): Record<string, unknown> {
   const now = new Date();
   const periodMs =
-    period === 'daily' ? 24 * 60 * 60 * 1000 : period === 'weekly' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+    period === 'daily'
+      ? 24 * 60 * 60 * 1000
+      : period === 'weekly'
+        ? 7 * 24 * 60 * 60 * 1000
+        : 30 * 24 * 60 * 60 * 1000;
 
   const filteredEvents = events.filter(
     (event) => new Date(event.timestamp).getTime() > now.getTime() - periodMs
@@ -230,18 +233,16 @@ export function generateCIReport(
     repositoryCounts.set(event.repository, counts);
   }
 
-  const report: Record<string, unknown> = {
-    period,
-    generatedAt: now.toISOString(),
-    totalEvents: filteredEvents.length,
-    repositories: {},
-  };
+  const repositories: Record<
+    string,
+    { total: number; success: number; failure: number; pending: number; successRate: string }
+  > = {};
 
   for (const [repo, counts] of repositoryCounts.entries()) {
     const total = counts.success + counts.failure + counts.pending;
     const successRate = total > 0 ? ((counts.success / total) * 100).toFixed(1) : '0';
 
-    report.repositories![repo as unknown as string] = {
+    repositories[repo] = {
       total,
       success: counts.success,
       failure: counts.failure,
@@ -250,7 +251,12 @@ export function generateCIReport(
     };
   }
 
-  return report;
+  return {
+    period,
+    generatedAt: now.toISOString(),
+    totalEvents: filteredEvents.length,
+    repositories,
+  };
 }
 
 export function setAlertConfig(repository: string, config: Partial<AlertConfig>): void {
