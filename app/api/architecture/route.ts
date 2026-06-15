@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
 
     // Shallow clone the repository
     try {
-      await execFilePromise('git', ['clone', '--depth', '1', cloneUrl, tempDir]);
+      await execFilePromise('git', ['clone', '--depth', '1', '--', cloneUrl, tempDir]);
     } catch (err) {
       console.error('Cloning failed for repository:', repoUrl, err);
       // Clean up tempDir if it was created

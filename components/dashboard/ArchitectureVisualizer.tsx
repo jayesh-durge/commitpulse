@@ -777,7 +777,7 @@ export default function ArchitectureVisualizer({ onClose }: ArchitectureVisualiz
                               {selectedNode.isFolder ? 'Folder' : 'File Spec'}
                             </span>
                             <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate mt-0.5">
-                              {selectedNode.name || selectedNode.label}
+                              {selectedNode.name}
                             </h4>
                             <p className="text-[10px] text-gray-500 dark:text-[#A1A1AA] truncate mt-1">
                               {selectedNode.path}
@@ -800,7 +800,7 @@ export default function ArchitectureVisualizer({ onClose }: ArchitectureVisualiz
                                   File Size
                                 </span>
                                 <span className="text-xs font-bold text-gray-900 dark:text-white block mt-0.5">
-                                  {formattedSize(selectedNode.size)}
+                                  {formattedSize(selectedNode.size || 0)}
                                 </span>
                               </div>
                               <div className="bg-gray-50 dark:bg-white/5 p-2 rounded-lg border border-black/5 dark:border-white/5">
