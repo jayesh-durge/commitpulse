@@ -221,7 +221,7 @@ describe('GET /api/wrapped', () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
       expect(response.status).toBe(429);
       const body = await response.text();
-      expect(body).toContain('RATE LIMITED');
+      expect(body).toContain('API RATE LIMIT');
     });
 
     it('returns 429 with SVG rate limit card and circuit telemetry headers when circuit is open', async () => {
