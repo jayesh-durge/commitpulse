@@ -222,14 +222,10 @@ const baseStreakParamsSchema = z.object({
   bg: z
     .string()
     .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      const cleanVal = val.trim().replace(/^#+/, '');
-      if (/^([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(cleanVal)) {
-        return cleanVal as HexColor;
-      }
-      return undefined;
-    }),
+    .refine((val) => !val || /^[0-9a-fA-F]{3,4}$|^[0-9a-fA-F]{6,8}$/.test(val.replace('#', '')), {
+      message: 'bg must be a valid hex color (with or without #)',
+    })
+    .transform((val) => (val ? sanitizeHexColor(val, '0d1117') : undefined)),
   bgType: z.enum(['solid', 'linear', 'radial']).catch('solid').default('solid'),
   bgStart: z
     .string()
@@ -260,34 +256,37 @@ const baseStreakParamsSchema = z.object({
   text: z
     .string()
     .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      const cleanVal = val.trim().replace(/^#+/, '');
-      if (/^([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(cleanVal)) {
-        return cleanVal as HexColor;
-      }
-      return undefined;
-    }),
+    .refine((val) => !val || /^[0-9a-fA-F]{3,4}$|^[0-9a-fA-F]{6,8}$/.test(val.replace('#', '')), {
+      message: 'text must be a valid hex color (with or without #)',
+    })
+    .transform((val) => (val ? sanitizeHexColor(val, 'ffffff') : undefined)),
   accent: z
     .string()
     .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        const parts = val.includes(',') ? val.split(',') : [val];
+        return parts.every((p) =>
+          /^[0-9a-fA-F]{3,4}$|^[0-9a-fA-F]{6,8}$/.test(p.trim().replace('#', ''))
+        );
+      },
+      {
+        message:
+          'accent must be a valid hex color (with or without #), or a comma-separated list of them',
+      }
+    )
     .transform((val) => {
       if (!val) return undefined;
       if (val.includes(',')) {
-        const parts = val
+        return val
           .split(',')
-          .map((c) => c.trim().replace(/^#+/, ''))
+          .map((c) => c.trim())
           .filter((c) => c.length > 0)
-          .filter((c) => /^([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(c))
-          .map((c) => c as HexColor)
-          .slice(0, 4);
-        return parts.length > 0 ? parts : undefined;
+          .slice(0, 4)
+          .map((c) => sanitizeHexColor(c, '00ffaa'));
       }
-      const cleanVal = val.trim().replace(/^#+/, '');
-      if (/^([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(cleanVal)) {
-        return cleanVal as HexColor;
-      }
-      return undefined;
+      return sanitizeHexColor(val, '00ffaa');
     }),
 
   // Silently fall back to 'linear' for unknown values (matches old behavior)
@@ -367,18 +366,7 @@ const baseStreakParamsSchema = z.object({
   tz: timeZoneParam,
   // Unknown view values fall back to the default dashboard view.
   view: z
-    .enum([
-      'default',
-      'monthly',
-      'heatmap',
-      'pulse',
-      'skyline',
-      'languages',
-      'constellation',
-      'radar',
-      'doughnut',
-      'pie',
-    ])
+    .enum(['default', 'monthly', 'heatmap', 'pulse', 'skyline', 'languages', 'constellation'])
     .catch('default')
     .default('default'),
   // Invalid delta formats fall back to percentage mode.
@@ -453,41 +441,12 @@ const baseStreakParamsSchema = z.object({
   // Glow effect — on by default. Accepts 'true'/'1' (true) or 'false' (false).
   glow: z.string().optional().transform(toGlowFlag).default(true),
   opacity: z.string().optional().transform(toOpacityValue),
-  entrance: z
-    .enum(['rise', 'fade', 'slide', 'wave', 'bounce', 'none'])
-    .catch('rise')
-    .default('rise'),
+  entrance: z.enum(['rise', 'fade', 'slide', 'none']).catch('rise').default('rise'),
   badges: z.string().optional().transform(toBooleanFlag).default(false),
 
-  // Output format: 'svg' (default), 'json', or 'png' for image export.
+  // Output format: 'svg' (default) or 'json' for programmatic access.
   // Invalid values silently fall back to 'svg'.
-  format: z.enum(['svg', 'json', 'png']).catch('svg').default('svg'),
-
-  theta: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (val === undefined || val === '') return true;
-        const num = Number(val);
-        return !isNaN(num) && num >= 0 && num <= 360;
-      },
-      { message: 'theta must be a number between 0 and 360' }
-    )
-    .transform((val) => (val === undefined || val === '' ? undefined : Number(val))),
-
-  phi: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (val === undefined || val === '') return true;
-        const num = Number(val);
-        return !isNaN(num) && num >= 0 && num <= 90;
-      },
-      { message: 'phi must be a number between 0 and 90' }
-    )
-    .transform((val) => (val === undefined || val === '' ? undefined : Number(val))),
+  format: z.enum(['svg', 'json']).catch('svg').default('svg'),
 
   // layout parameter: strictly validated — unsupported values return a 400 Bad Request.
   layout: z
