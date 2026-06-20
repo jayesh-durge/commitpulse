@@ -502,6 +502,23 @@ const baseStreakParamsSchema = z.object({
       { message: 'Invalid layout format. Supported values: default, compact, full.' }
     )
     .transform((val) => (!val ? undefined : val)),
+
+  // border parameter: optional hex color for SVG badge border stroke
+  border: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (val === undefined || val === '') return true;
+        const cleanVal = val.replace(/^#/, '');
+        return /^[0-9a-fA-F]{3,4}$|^[0-9a-fA-F]{6,8}$/.test(cleanVal);
+      },
+      { message: 'border must be a valid hex color (with or without #)' }
+    )
+    .transform((val) => {
+      if (!val) return undefined;
+      return sanitizeHexColor(val, '58a6ff');
+    }),
 });
 
 export const streakParamsSchema = baseStreakParamsSchema.refine(

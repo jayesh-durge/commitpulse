@@ -160,6 +160,7 @@ export async function GET(request: Request) {
       entrance,
       theta,
       phi,
+      border,
     } = parseResult.data;
     const normalizedView = view as
       | 'default'
@@ -308,8 +309,6 @@ export async function GET(request: Request) {
             .slice(0, 2)
             .join(' + ')
         : user);
-    const borderParam = searchParams.get('border');
-    const sanitizedBorder = borderParam ? borderParam.replace(/[^a-fA-F0-9]/g, '') : undefined;
     const animate = searchParams.get('animate') !== 'false';
     // Validate and clamp the speed param to prevent broken SVG animation
     const rawSpeedNum = speed ? parseFloat(String(speed)) : NaN;
@@ -328,7 +327,7 @@ export async function GET(request: Request) {
       bgAngle,
       text: isAutoTheme ? selectedTheme.text : text || selectedTheme.text,
       accent: isAutoTheme ? selectedTheme.accent : accent || selectedTheme.accent,
-      border: sanitizedBorder,
+      border,
       radius,
       speed: validatedSpeed,
       scale,
