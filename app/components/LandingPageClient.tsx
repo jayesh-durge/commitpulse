@@ -367,6 +367,12 @@ export default function LandingPageClient() {
   const previewUsername = instantUsername || debouncedUsername;
   const hasUsername = previewUsername.length > 0;
 
+  // Keep track of the latest previewUsername to avoid race conditions with out-of-order image callbacks
+  const latestPreviewUsernameRef = useRef(previewUsername);
+  useEffect(() => {
+    latestPreviewUsernameRef.current = previewUsername;
+  }, [previewUsername]);
+
   const badgeUrl = `/api/streak?user=${encodeURIComponent(previewUsername)}`;
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://commitpulse.vercel.app').replace(
     /\/$/,
@@ -907,12 +913,16 @@ export default function LandingPageClient() {
                         animate={{ opacity: badgeLoaded ? 1 : 0, scale: badgeLoaded ? 1 : 0.95 }}
                         transition={{ duration: 0.5, ease: 'easeOut' }}
                         className="w-full max-w-[700px] h-auto drop-shadow-[0_30px_60px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
-                        onLoad={() =>
-                          setBadgeResult({ username: previewUsername, status: 'loaded' })
-                        }
-                        onError={() =>
-                          setBadgeResult({ username: previewUsername, status: 'error' })
-                        }
+                        onLoad={() => {
+                          if (previewUsername === latestPreviewUsernameRef.current) {
+                            setBadgeResult({ username: previewUsername, status: 'loaded' });
+                          }
+                        }}
+                        onError={() => {
+                          if (previewUsername === latestPreviewUsernameRef.current) {
+                            setBadgeResult({ username: previewUsername, status: 'error' });
+                          }
+                        }}
                       />
                       {badgeLoaded && (
                         <button
