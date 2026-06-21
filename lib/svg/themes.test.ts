@@ -4,7 +4,7 @@
 // structure integrity, and AUTO_THEME pair safety checks.
 
 import { describe, it, expect } from 'vitest';
-import { themes, AUTO_THEME_LIGHT, AUTO_THEME_DARK } from './themes';
+import { themes, AUTO_THEME_LIGHT, AUTO_THEME_DARK, getNormalizedThemeKey } from './themes';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -228,5 +228,26 @@ describe('known theme palette regression guards', () => {
     expect(themes['cyber-pulse'].bg).toBe('000000');
     expect(themes['cyber-pulse'].text).toBe('ffffff');
     expect(themes['cyber-pulse'].accent).toBe('00ffee');
+  });
+});
+
+// ── Normalization Behavior Checks ─────────────────────────────────────────────
+
+describe('getNormalizedThemeKey', () => {
+  it('matches kebab-case keys when user provides all lowercase mashed inputs', () => {
+    expect(getNormalizedThemeKey('cyber-pulse')).toBe('cyber-pulse');
+  });
+
+  it('matches keys when user provides screaming uppercase inputs', () => {
+    expect(getNormalizedThemeKey('DRACULA')).toBe('dracula');
+  });
+
+  it('returns default fallback when theme name does not exist', () => {
+    expect(getNormalizedThemeKey('invalidThemeNonexistent')).toBe('default');
+  });
+
+  it('returns default fallback gracefully when theme parameter is undefined or null', () => {
+    expect(getNormalizedThemeKey(undefined)).toBe('default');
+    expect(getNormalizedThemeKey(null)).toBe('default');
   });
 });

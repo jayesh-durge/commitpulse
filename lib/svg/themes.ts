@@ -48,3 +48,16 @@ export const themes: Record<string, BadgeTheme> = {
 // viewer's OS-level light/dark setting without any JavaScript.
 export const AUTO_THEME_LIGHT: BadgeTheme = themes.light;
 export const AUTO_THEME_DARK: BadgeTheme = themes.dark;
+
+/**
+ * Resolves a theme case-insensitively by matching the normalized user input
+ * against the normalized theme registry keys. Returns the standard theme key.
+ */
+export function getNormalizedThemeKey(themeInput: string | undefined | null): string {
+  if (!themeInput) return 'default'; // fallback key
+
+  const target = themeInput.toLowerCase();
+  const matchedKey = Object.keys(themes).find((key) => key.toLowerCase() === target);
+
+  return matchedKey || 'default';
+}
