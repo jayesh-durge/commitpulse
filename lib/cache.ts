@@ -324,10 +324,12 @@ export class DistributedCache<T> {
     this.localCache = new TTLCache<T>(maxSize, cleanupIntervalMs);
     const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-    this.useRedis = Boolean(url && token);
-    if (this.useRedis) {
-      this.redisUrl = url!.replace(/\/$/, ''); // Remove trailing slash
-      this.redisToken = token!;
+    if (url && token) {
+      this.useRedis = true;
+      this.redisUrl = url.replace(/\/$/, ''); // Remove trailing slash
+      this.redisToken = token;
+    } else {
+      this.useRedis = false;
     }
   }
 
@@ -546,19 +548,22 @@ return c`;
       this.localCache.set(key, count as unknown as T, ttlMs);
       return count;
     } catch (err) {
-      logger.error('Cache INCR failed', {
-        component: 'DistributedCache',
-        key,
-        error: err,
-      });
-      const current = (this.localCache.get(key) as unknown as number) || 0;
-      const next = current + 1;
-      if (current === 0) {
-        this.localCache.set(key, next as unknown as T, ttlMs);
-      } else {
-        this.localCache.update(key, next as unknown as T);
-      }
-      return next;
+      logger.error(
+        'Cache INCR failed — failing closed to avoid bypassing distributed rate limits',
+        {
+          component: 'DistributedCache',
+          key,
+          error: err,
+        }
+      );
+      // Do NOT fall back to a per-instance local counter here. Serverless
+      // instances don't share memory, so a local fallback would let each
+      // instance maintain its own disconnected counter — silently multiplying
+      // the effective rate limit by the number of active instances during
+      // any Redis blip. Failing closed (returning a large value that exceeds
+      // any realistic limit) ensures callers treat this as "limit exceeded"
+      // rather than "limit reset," which is the safer default during an outage.
+      return Number.MAX_SAFE_INTEGER;
     }
   }
 
