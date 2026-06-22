@@ -14,6 +14,7 @@ import { CONTRIBUTION_MILESTONES, STREAK_MILESTONES } from './svg/constants';
 import { quotaMonitor } from '@/services/github/quota-monitor';
 import pLimit from 'p-limit';
 import logger from '@/lib/logger';
+import { decryptGitHubToken, isEncryptedToken } from '@/lib/github-token-encryption';
 
 interface GitHubRepo {
   name: string;
@@ -66,7 +67,19 @@ export function getGitHubTokens(): string[] {
   return envToken
     .split(',')
     .map((t) => t.trim())
-    .filter((t) => t !== '');
+    .filter((t) => t !== '')
+    .map((token) => {
+      if (isEncryptedToken(token)) {
+        try {
+          return decryptGitHubToken(token);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          logger.warn(`Failed to decrypt GitHub token: ${message}`);
+          return token;
+        }
+      }
+      return token;
+    });
 }
 
 function isAbortError(error: unknown): boolean {
