@@ -127,11 +127,53 @@ function dimensionParam(name: string, min: number, max: number) {
     .transform(toDimensionValue);
 }
 
+/**
+ * Maps raw GMT/UTC offset strings (e.g. "GMT+5", "UTC-3") to the
+ * Etc/GMT±N format that Intl.DateTimeFormat accepts.
+ *
+ * Note: The Etc/GMT sign convention is *inverted* relative to the
+ * common GMT± notation — Etc/GMT+5 means UTC−5. This function
+ * performs that inversion automatically.
+ *
+ * Returns the original string unchanged if it doesn't match a raw
+ * offset pattern, so callers can pass any timezone string through.
+ */
+export function normalizeTimezone(tz: string): string {
+  // Match patterns: GMT+N, GMT-N, UTC+N, UTC-N (whole hours 0-14)
+  const match = tz.match(/^(?:GMT|UTC)([+-])(\d{1,2})$/i);
+  if (!match) return tz;
+
+  const sign = match[1];
+  const offset = parseInt(match[2], 10);
+
+  // Validate offset range: UTC-12 to UTC+14
+  if (offset > 14 || (sign === '-' && offset > 12)) return tz;
+
+  // GMT+0 / UTC+0 → UTC (avoids the Etc/GMT-0 / Etc/GMT+0 ambiguity)
+  if (offset === 0) return 'UTC';
+
+  // Invert sign for Etc/GMT convention: GMT+5 → Etc/GMT-5
+  const invertedSign = sign === '+' ? '-' : '+';
+  return `Etc/GMT${invertedSign}${offset}`;
+}
+
 function isValidTimeZone(tz?: string): boolean {
   if (!tz) return true;
 
+  // First try the timezone as-is (covers IANA names and Etc/GMT±N)
   try {
     Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    // Fall through to normalization
+  }
+
+  // Try normalizing raw GMT/UTC offsets to Etc/GMT format
+  const normalized = normalizeTimezone(tz);
+  if (normalized === tz) return false; // No normalization happened, it's invalid
+
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: normalized });
     return true;
   } catch {
     return false;
@@ -321,7 +363,7 @@ const baseStreakParamsSchema = z.object({
       (val) => {
         if (!val) return true;
         const yearNum = parseInt(val, 10);
-        const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getUTCFullYear();
         return /^\d{4}$/.test(val) && yearNum >= 2008 && yearNum <= currentYear;
       },
       {
@@ -672,7 +714,7 @@ export const wrappedParamsSchema = z.object({
       (val) => {
         if (!val) return true;
         const yearNum = parseInt(val, 10);
-        const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getUTCFullYear();
         return /^\d{4}$/.test(val) && yearNum >= 2008 && yearNum <= currentYear;
       },
       {
@@ -793,12 +835,12 @@ export const resumeConfirmDataSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: 'Name and email are required' })
+    .min(2, { message: 'Name must be at least 2 characters' })
     .max(100, { message: 'Name must be at most 100 characters' }),
   email: z
     .string()
     .trim()
-    .min(1, { message: 'Name and email are required' })
+    .min(1, { message: 'A valid email address is required' })
     .max(254, { message: 'Email must be at most 254 characters' })
     .email({ message: 'Invalid email address' }),
   phone: z.string().trim().max(40, { message: 'Phone must be at most 40 characters' }).default(''),
