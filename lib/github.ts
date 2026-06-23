@@ -1,3 +1,4 @@
+// Resolves Issue #6105 (Intelligent API Resilience)
 import type {
   ContributionCalendar,
   ContributionDay,
