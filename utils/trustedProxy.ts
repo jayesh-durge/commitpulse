@@ -88,6 +88,7 @@ export function isIPv4(ip: string): boolean {
  * Pre-processes a TrustedProxyConfig into a ParsedProxyConfig
  * separating wildcards, exact IPs, and CIDR ranges for faster lookup.
  */
+const parsedProxyConfigCache = new WeakMap<TrustedProxyConfig, ParsedProxyConfig>();
 export function buildProxyConfig(config: TrustedProxyConfig): ParsedProxyConfig {
   const exactSet = new Set<string>();
   const cidrList: ParsedCidr[] = [];
@@ -118,7 +119,12 @@ export function buildProxyConfig(config: TrustedProxyConfig): ParsedProxyConfig 
  */
 export function isTrustedProxy(ip: string, config: TrustedProxyConfig): boolean {
   const sanitizedIp = ip.trim();
-  const parsed = buildProxyConfig(config);
+  let parsed = parsedProxyConfigCache.get(config);
+
+  if (!parsed) {
+    parsed = buildProxyConfig(config);
+    parsedProxyConfigCache.set(config, parsed);
+  }
 
   if (parsed.wildcard) return true;
   if (parsed.exactSet.has(sanitizedIp)) return true;
