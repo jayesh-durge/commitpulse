@@ -133,6 +133,12 @@ export function findTodayIndex(
 
   return localTodayIndex !== -1 ? localTodayIndex : -1;
 }
+function getDayDifference(fromDate: string, toDate: string): number {
+  const from = new Date(`${fromDate}T00:00:00Z`);
+  const to = new Date(`${toDate}T00:00:00Z`);
+
+  return Math.floor((to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000));
+}
 
 export function calculateStreak(
   calendar?: ContributionCalendar | null,
@@ -192,7 +198,18 @@ export function calculateStreak(
     const lastDateStr = uniqueDays[lastIndex]?.date;
 
     if (lastDateStr && localTodayStr > lastDateStr) {
-      todayIndex = lastIndex;
+      const gapDays = getDayDifference(lastDateStr, localTodayStr);
+
+      if (gapDays <= Math.max(1, grace)) {
+        todayIndex = lastIndex;
+      } else {
+        return {
+          currentStreak: 0,
+          longestStreak,
+          totalContributions: calendar.totalContributions || 0,
+          todayDate: localTodayStr,
+        };
+      }
     } else {
       return {
         currentStreak: 0,
