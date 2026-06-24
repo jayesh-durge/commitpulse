@@ -2005,6 +2005,102 @@ describe('aggregateCalendars', () => {
   });
 });
 
+describe('aggregateCalendars - week structure preservation', () => {
+  it('preserves original week boundaries when aggregating calendars', () => {
+    const cal1 = {
+      totalContributions: 3,
+      weeks: [
+        {
+          contributionDays: [
+            { date: '2024-01-01', contributionCount: 1 },
+            { date: '2024-01-02', contributionCount: 2 },
+          ],
+        },
+        {
+          contributionDays: [{ date: '2024-01-08', contributionCount: 3 }],
+        },
+      ],
+    };
+
+    const cal2 = {
+      totalContributions: 2,
+      weeks: [
+        {
+          contributionDays: [{ date: '2024-01-01', contributionCount: 1 }],
+        },
+        {
+          contributionDays: [{ date: '2024-01-08', contributionCount: 1 }],
+        },
+      ],
+    };
+
+    const result = aggregateCalendars([cal1, cal2]);
+
+    expect(result.weeks).toHaveLength(2);
+
+    expect(result.weeks[0].contributionDays.map((d) => d.date)).toEqual([
+      '2024-01-01',
+      '2024-01-02',
+    ]);
+
+    expect(result.weeks[1].contributionDays.map((d) => d.date)).toEqual(['2024-01-08']);
+  });
+
+  it('aggregates contribution counts without moving days between weeks', () => {
+    const cal1 = {
+      totalContributions: 5,
+      weeks: [
+        {
+          contributionDays: [{ date: '2024-02-01', contributionCount: 2 }],
+        },
+        {
+          contributionDays: [{ date: '2024-02-08', contributionCount: 3 }],
+        },
+      ],
+    };
+
+    const cal2 = {
+      totalContributions: 4,
+      weeks: [
+        {
+          contributionDays: [{ date: '2024-02-01', contributionCount: 1 }],
+        },
+        {
+          contributionDays: [{ date: '2024-02-08', contributionCount: 3 }],
+        },
+      ],
+    };
+
+    const result = aggregateCalendars([cal1, cal2]);
+
+    expect(result.weeks[0].contributionDays[0].contributionCount).toBe(3);
+    expect(result.weeks[1].contributionDays[0].contributionCount).toBe(6);
+  });
+
+  it('preserves optional ContributionDay fields during aggregation', () => {
+    const cal1 = {
+      totalContributions: 1,
+      weeks: [
+        {
+          contributionDays: [
+            {
+              date: '2024-03-01',
+              contributionCount: 1,
+              locAdditions: 500,
+              locDeletions: 200,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = aggregateCalendars([cal1]);
+
+    expect(result.weeks[0].contributionDays[0].locAdditions).toBe(500);
+    expect(result.weeks[0].contributionDays[0].locDeletions).toBe(200);
+  });
+});
+
 describe('calculateWrappedStats', () => {
   // ── getUTCDay() regression guard tests ───────────────────────────────────
   // These tests pin specific calendar dates to their known UTC day-of-week.
