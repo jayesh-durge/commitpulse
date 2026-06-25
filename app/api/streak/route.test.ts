@@ -771,6 +771,24 @@ describe('GET /api/streak', () => {
       expect(body).toContain('Invalid theme. Supported themes:');
     });
 
+    it('returns 400 when theme parameter contains only whitespace', async () => {
+      const response = await GET(
+        makeRequest({
+          user: 'octocat',
+          theme: '   ',
+        })
+      );
+
+      expect(response.status).toBe(400);
+
+      const body = await response.text();
+      expect(body).toContain('<svg');
+      expect(body).toContain('Invalid theme');
+      expect(body).toContain('Supported themes:');
+
+      expect(fetchGitHubContributions).not.toHaveBeenCalled();
+    });
+
     it('accepts capitalized or mixed-case theme parameter like "NEON" and maps it correctly', async () => {
       const response = await GET(makeRequest({ user: 'octocat', theme: 'NEON' }));
       const body = await response.text();
