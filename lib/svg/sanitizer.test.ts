@@ -33,10 +33,11 @@ describe('SVG Sanitizer Utilities', () => {
       expect(isValidHex('ff00ff"')).toBe(false);
     });
 
-    it('returns false for invalid length', () => {
+    it('returns false for invalid lengths', () => {
       expect(isValidHex('f')).toBe(false);
       expect(isValidHex('ff')).toBe(false);
       expect(isValidHex('fffff')).toBe(false);
+      expect(isValidHex('fffffff')).toBe(false);
     });
 
     it('returns false for undefined, null, or empty string', () => {
@@ -45,20 +46,8 @@ describe('SVG Sanitizer Utilities', () => {
       expect(isValidHex('')).toBe(false);
     });
 
-    it('returns false for an empty string', () => {
-      expect(isValidHex('')).toBe(false);
-    });
-
     it('returns false for just a hash symbol', () => {
       expect(isValidHex('#')).toBe(false);
-    });
-
-    it('returns false for undefined input', () => {
-      expect(isValidHex(undefined)).toBe(false);
-    });
-
-    it('returns false for invalid length (7 characters)', () => {
-      expect(isValidHex('fffffff')).toBe(false);
     });
   });
 
